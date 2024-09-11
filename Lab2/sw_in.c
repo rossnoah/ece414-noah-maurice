@@ -1,27 +1,27 @@
 #include "sw_in.h"
 #include "stdbool.h"
 
-#define INPUT_PIN_2 22
-#define INPUT_PIN_1 21
+#define SW1_PIN 16
+#define SW2_PIN 17
 
 void sw_in_init()
 {
     // do thing
-    gpio_init(INPUT_PIN_1);
-    gpio_init(INPUT_PIN_2);
+    gpio_init(SW1_PIN);
+    gpio_init(SW2_PIN);
 
-    gpio_set_dir(INPUT_PIN_1, GPIO_IN);
-    gpio_set_dir(INPUT_PIN_2, GPIO_IN);
+    gpio_set_dir(SW1_PIN, GPIO_IN);
+    gpio_set_dir(SW2_PIN, GPIO_IN);
 
-    gpio_pull_up(INPUT_PIN_1);
-    gpio_pull_up(INPUT_PIN_2);
+    gpio_pull_up(SW1_PIN);
+    gpio_pull_up(SW2_PIN);
 }
 bool sw_in_read1()
 {
-    return !gpio_get(INPUT_PIN_1);
+    return !gpio_get(SW1_PIN);
 }
 
 bool sw_in_read2()
 {
-    return !gpio_get(INPUT_PIN_2);
+    return !gpio_get(SW2_PIN);
 }

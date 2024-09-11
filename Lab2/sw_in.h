@@ -1,5 +1,5 @@
 #ifndef SW_IN_H
-#define SW_IN_h
+#define SW_IN_H
 
 #include "pico/stdlib.h"
 #include "stdbool.h"
