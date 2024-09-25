@@ -11,22 +11,28 @@ Game state machine
 #include "debounce_sw1.h"
 #include "debounce_sw2.h"
 #include "timer.h"
+#include "hardware/uart.h"
 
-// flag indicating button pressed and debounced
-// cleared when read by debounce1_pressed()
-static int turn;
+static int turn = 1;
 static int led_pos;
 static int game_speed_count;
 
 // Game_State variable
 
+// S0 wait for start button
+// S1 Move the led from left to right
+// S2 Move the led from right to left
+// S3 LED is all the way right, if we dont have a button press the game is over -> S5
+// S4 LED is all the way left, if we dont have a button press the game is over -> S6
+// S5 Game over, right side lost -> S0
+// S6 Game over, left side lost -> S0
 static enum Game_States { GAMESTART,
-                          LEFT_TO_RIGHT,
-                          RIGHT_TO_LEFT,
-                          RIGHT_SIDE,
-                          LEFT_SIDE,
-                          LOST_RIGHT,
-                          LOST_LEFT } Game_State;
+                          R_TO_L,
+                          L_TO_R,
+                          L_SIDE,
+                          R_SIDE,
+                          L_LOST,
+                          R_LOST } Game_State;
 
 void game_init()
 {
@@ -47,82 +53,102 @@ void game_tick(bool btn1, bool btn2)
         {
             if (btn1)
             {
-                Game_State = LEFT_TO_RIGHT;
+                Game_State = R_TO_L;
             }
         }
         else
         {
             if (btn2)
             {
-                Game_State = RIGHT_TO_LEFT;
+                Game_State = L_TO_R;
             }
         }
 
         led_pos = turn ? 0b00000001 : 0b10000000;
 
         break;
-    case LEFT_TO_RIGHT:
+    case R_TO_L:
         led_pos = led_pos >> 1;
         if (led_pos == 0b00000001)
         {
-            Game_State = RIGHT_SIDE;
+            Game_State = L_SIDE;
         }
         break;
 
-    case RIGHT_TO_LEFT:
+    case L_TO_R:
         led_pos = led_pos << 1;
         if (led_pos == 0b10000000)
         {
-            Game_State = LEFT_SIDE;
+            Game_State = R_SIDE;
         }
         break;
 
-    case RIGHT_SIDE:
+    case L_SIDE:
         if (btn2)
         {
-            Game_State = RIGHT_TO_LEFT;
+            Game_State = L_TO_R;
             led_pos = led_pos << 1;
             game_speed_count++;
         }
         else
         {
-            Game_State = LOST_RIGHT;
+            Game_State = L_LOST;
             turn = rand() % 2;
         }
         break;
 
-    case LEFT_SIDE:
+    case R_SIDE:
         if (btn1)
         {
-            Game_State = LEFT_TO_RIGHT;
+            Game_State = R_TO_L;
             led_pos = led_pos >> 1;
             game_speed_count++;
         }
         else
         {
-            Game_State = LOST_LEFT;
+            Game_State = R_LOST;
             turn = rand() % 2;
         }
         break;
 
-    case LOST_RIGHT:
-        led_out_write(0x0f);
+    case L_LOST:
+        uart_puts(uart0, "Left Lost\n");
+
+        led_out_write(0x80);
         sleep_ms(300);
         led_out_write(0x00);
         sleep_ms(300);
-        led_out_write(0x0f);
+        led_out_write(0x80);
+        sleep_ms(300);
+        led_out_write(0x00);
+        sleep_ms(300);
+        led_out_write(0x80);
+        sleep_ms(300);
+        led_out_write(0x00);
+        sleep_ms(300);
+        led_out_write(0x80);
         sleep_ms(300);
         Game_State = GAMESTART;
         game_speed_count = 0;
         break;
 
-    case LOST_LEFT:
-        led_out_write(0xf0);
+    case R_LOST:
+        uart_puts(uart0, "Right Lost\n");
+        led_out_write(0x01);
         sleep_ms(300);
         led_out_write(0x00);
         sleep_ms(300);
-        led_out_write(0xf0);
+        led_out_write(0x01);
         sleep_ms(300);
+        led_out_write(0x00);
+        sleep_ms(300);
+        led_out_write(0x01);
+        sleep_ms(300);
+        led_out_write(0x00);
+        sleep_ms(300);
+        led_out_write(0x01);
+        sleep_ms(300);
+
         Game_State = GAMESTART;
         game_speed_count = 0;
 
@@ -131,9 +157,6 @@ void game_tick(bool btn1, bool btn2)
     default:
         break;
     }
-
-    // note: no other Game_State actions required,
-    // so we don't need a 2nd switch Game_Statement
 }
 
 int led_state()
