@@ -57,14 +57,16 @@ void main()
         {
             debounce_sw1_tick();
             debounce_sw2_tick();
+            game_tick(debounce_sw1_pressed(), debounce_sw2_pressed());
+
             t1 = t2;
         }
 
-        if (timer_elapsed_ms(t1, t3) >= GAME_MS)
-        {
-            game_tick(debounce_sw1_pressed(), debounce_sw2_pressed());
-            t1 = t3;
-        }
+        // if (timer_elapsed_ms(t1, t3) >= DEBOUNCE_PD_MS)
+        // {
+        //     game_tick(debounce_sw1_pressed(), debounce_sw2_pressed());
+        //     t1 = t3;
+        // }
 
         led_out_write(led_state());
     }

@@ -5,10 +5,15 @@
  * Debounce a switch read by the sw_in module
  */
 
-#include "stdio.h"
 #include "pico/stdlib.h"
-#include "debounce_sw1.h"
+#include "led_out.h"
+#include "stdint.h"
 #include "sw_in.h"
+#include "stdbool.h"
+#include "stdlib.h"
+#include "debounce_sw1.h"
+#include "debounce_sw2.h"
+#include "timer.h"
 
 // flag indicating button pressed and debounced
 // cleared when read by debounce1_pressed()
