@@ -16,51 +16,51 @@ static bool btn_pressed;
 
 // state variable
 
-static enum DB_States { NOPUSH,
-                        MAYBEPUSH,
-                        PUSHED,
-                        MAYBENOPUSH } DB_State;
+static enum Game_States { NOPUSH,
+                          MAYBEPUSH,
+                          PUSHED,
+                          MAYBENOPUSH } Game_State;
 
 void debounce_sw2_init()
 {
-    DB_State = NOPUSH;
+    Game_State = NOPUSH;
     btn_pressed = false;
 }
 
 void debounce_sw2_tick()
 {
     bool btn = sw_in_read2();
-    switch (DB_State)
+    switch (Game_State)
     {
     case NOPUSH:
         if (btn)
-            DB_State = MAYBEPUSH;
+            Game_State = MAYBEPUSH;
         else
-            DB_State = NOPUSH;
+            Game_State = NOPUSH;
         break;
     case MAYBEPUSH:
         if (btn)
         {
             btn_pressed = true;
-            DB_State = PUSHED;
+            Game_State = PUSHED;
         }
         else
-            DB_State = NOPUSH;
+            Game_State = NOPUSH;
         break;
     case PUSHED:
         if (btn)
-            DB_State = PUSHED;
+            Game_State = PUSHED;
         else
-            DB_State = MAYBENOPUSH;
+            Game_State = MAYBENOPUSH;
         break;
     case MAYBENOPUSH:
         if (btn)
-            DB_State = PUSHED;
+            Game_State = PUSHED;
         else
-            DB_State = NOPUSH;
+            Game_State = NOPUSH;
         break;
     default:
-        DB_State = NOPUSH;
+        Game_State = NOPUSH;
         break;
     }
 

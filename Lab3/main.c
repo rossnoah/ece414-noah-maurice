@@ -7,6 +7,7 @@
 #include "debounce_sw1.h"
 #include "debounce_sw2.h"
 #include "timer.h"
+#include "game.h"
 
 uint16_t out;
 bool turn = 1;
@@ -16,7 +17,7 @@ uint32_t t1, t2;
 
 void main()
 {
-    uint32_t t1, t2;
+    uint32_t t1, t2, t3;
     uint8_t ledout = 0b00000000;
     sw_in_init();
     debounce_sw1_init();
@@ -59,85 +60,13 @@ void main()
             t1 = t2;
         }
 
-        switch (state)
+        if (timer_elapsed_ms(t1, t3) >= GAME_MS)
         {
-        case GAMESTART:
-            /* code */
-            if (turn == 0)
-            {
-                if (debounce_sw1_pressed())
-                {
-                    state = LEFT_TO_RIGHT;
-                }
-            }
-            else
-            {
-                if (debounce_sw2_pressed())
-                {
-                    state = RIGHT_TO_LEFT;
-                }
-            }
-
-            led_pos = turn ? 0b00000001 : 0b10000000;
-            led_out_write(led_pos);
-
-            break;
-        case LEFT_TO_RIGHT:
-            if (led_pos == 0b00000001)
-            {
-                state = RIGHT_SIDE;
-                break;
-            }
-            led_pos = led_pos >> 1;
-            led_out_write(led_pos);
-            sleep_ms(800);
-            break;
-        case RIGHT_TO_LEFT:
-            if (led_pos == 0b10000000)
-            {
-                state = LEFT_SIDE;
-                break;
-            }
-            led_pos = led_pos << 1;
-            led_out_write(led_pos);
-            sleep_ms(800);
-            break;
-        case RIGHT_SIDE:
-            if (debounce_sw2_pressed())
-            {
-                state = RIGHT_TO_LEFT;
-            }
-            else
-            {
-                state = LOST_RIGHT;
-                turn = rand() % 2;
-            }
-            break;
-        case LEFT_SIDE:
-            if (debounce_sw1_pressed())
-            {
-                state = LEFT_TO_RIGHT;
-            }
-            else
-            {
-                state = LOST_LEFT;
-                turn = rand() % 2;
-            }
-            break;
-        case LOST_RIGHT:
-            led_out_write(0b00000111);
-            sleep_ms(3000);
-            state = GAMESTART;
-            break;
-        case LOST_LEFT:
-            led_out_write(0b11100000);
-            sleep_ms(3000);
-            state = GAMESTART;
-            break;
-
-        default:
-            break;
+            game_tick(debounce_sw1_pressed(), debounce_sw2_pressed());
+            t1 = t3;
         }
+
+        led_out_write(led_state());
     }
 }
 
