@@ -5,9 +5,9 @@
  * Debounce a switch read by the sw_in module
  */
 
-#ifndef DEBOUNCER_H
-#define DEBOUNCER_H
-
+#ifndef DEBOUNCER1_H
+#define DEBOUNCER1_H
+#include "stdbool.h"
 #include "pico/stdlib.h"
 
 // use to schedule in main function:

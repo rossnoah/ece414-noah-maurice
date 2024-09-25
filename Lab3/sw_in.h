@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   sw_in.h
  * Author: nestorj
  *
@@ -10,6 +10,7 @@
 #define SW_IN_H
 
 #include "pico/stdlib.h"
+#include "stdbool.h"
 
 // use symbolic constants to make it easy to change pin assignment
 #define SW1_PIN 16

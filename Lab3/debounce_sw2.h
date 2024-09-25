@@ -1,8 +1,13 @@
+/*
+ * File:   debounce_sw2.h
+ * Author: nestorj
+ *
+ * Debounce a switch read by the sw_in module
+ */
 
-
-#ifndef DEBOUNCER_H
-#define DEBOUNCER_H
-
+#ifndef DEBOUNCER2_H
+#define DEBOUNCER2_H
+#include "stdbool.h"
 #include "pico/stdlib.h"
 
 // use to schedule in main function:
