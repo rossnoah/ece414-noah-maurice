@@ -4,8 +4,8 @@
 #include "pico/stdlib.h"
 #include "stdbool.h"
 
-#define INPUT_PIN_2 22
-#define INPUT_PIN_1 21
+#define SW1_PIN 17
+#define SW2_PIN 16
 
 void sw_in_init();
 bool sw_in_read1();

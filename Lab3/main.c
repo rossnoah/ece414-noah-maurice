@@ -1,4 +1,3 @@
-
 #include "pico/stdlib.h"
 #include "led_out.h"
 #include "stdint.h"
@@ -6,20 +5,25 @@
 #include "stdbool.h"
 #include "stdlib.h"
 
-bool inLeft, inRight;
+bool inLeft, inRight, rightBtn, leftBtn;
+
+int leftCtn, rightCtn = 0;
+
 uint16_t out;
 bool turn = 1;
 uint8_t led_pos = 0;
 
 // void assignRandomTurn()
-
+void tick();
 int main()
 {
     turn = rand() % 2;
-    led_pos = turn == 0 ? 0b10000000 : 0b00000001;
+    led_pos = turn ? 0b00000001 : 0b10000000;
 
     led_out_init();
     sw_in_init();
+
+    led_out_write(led_pos);
     // S0 wait for start button
     // S1 Move the led from left to right
     // S2 Move the led from right to left
@@ -43,10 +47,15 @@ int main()
 
     while (1)
     {
-        led_out_write(led_pos);
-
-        inLeft = sw_in_read1();
-        inRight = sw_in_read2();
+        tick();
+        // if (inLeft || inRight)
+        // {
+        //     led_out_write(0b00001111);
+        // }
+        // else
+        // {
+        //     led_out_write(0b11110000);
+        // }
 
         switch (state)
         {
@@ -67,7 +76,8 @@ int main()
                 }
             }
 
-            led_pos = turn == 0 ? 0b10000000 : 0b00000001;
+            led_pos = turn ? 0b00000001 : 0b10000000;
+            led_out_write(led_pos);
 
             break;
         case LEFT_TO_RIGHT:
@@ -77,6 +87,7 @@ int main()
                 break;
             }
             led_pos = led_pos >> 1;
+            led_out_write(led_pos);
             sleep_ms(800);
             break;
         case RIGHT_TO_LEFT:
@@ -86,10 +97,10 @@ int main()
                 break;
             }
             led_pos = led_pos << 1;
+            led_out_write(led_pos);
             sleep_ms(800);
             break;
         case RIGHT_SIDE:
-            sleep_ms(500);
             if (inRight)
             {
                 state = RIGHT_TO_LEFT;
@@ -97,11 +108,10 @@ int main()
             else
             {
                 state = LOST_RIGHT;
+                turn = rand() % 2;
             }
             break;
         case LEFT_SIDE:
-            sleep_ms(500);
-
             if (inLeft)
             {
                 state = LEFT_TO_RIGHT;
@@ -109,23 +119,23 @@ int main()
             else
             {
                 state = LOST_LEFT;
+                turn = rand() % 2;
             }
             break;
         case LOST_RIGHT:
             led_out_write(0b00000111);
-            sleep_ms(1000);
+            sleep_ms(3000);
             state = GAMESTART;
             break;
         case LOST_LEFT:
             led_out_write(0b11100000);
-            sleep_ms(1000);
+            sleep_ms(3000);
             state = GAMESTART;
             break;
 
         default:
             break;
         }
-        led_out_write(led_pos);
     }
     return 0;
 }
@@ -133,4 +143,43 @@ int main()
 void assignRandomTurn()
 {
     turn = rand() % 2;
+}
+
+void tick()
+{
+    sleep_ms(1);
+    inLeft = sw_in_read1();
+    inRight = sw_in_read2();
+
+    if (inLeft && leftCtn == 0)
+    {
+        leftBtn = true;
+        leftCtn = 200;
+    }
+
+    if (leftCtn > 0)
+    {
+        leftCtn--;
+    }
+
+    if (leftCtn == 0)
+    {
+        leftBtn = false;
+    }
+
+    if (inRight && rightCtn == 0)
+    {
+        rightBtn = true;
+        rightCtn = 200;
+    }
+
+    if (rightCtn > 0)
+    {
+        rightCtn--;
+    }
+
+    if (rightCtn == 0)
+    {
+        rightBtn = false;
+    }
 }
