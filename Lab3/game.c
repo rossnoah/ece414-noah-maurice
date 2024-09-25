@@ -1,9 +1,6 @@
 /*
- * File:   debounce_sw1.c
- * Author: nestorj
- *
- * Debounce a switch read by the sw_in module
- */
+Game state machine
+*/
 
 #include "pico/stdlib.h"
 #include "led_out.h"
@@ -19,6 +16,7 @@
 // cleared when read by debounce1_pressed()
 static int turn;
 static int led_pos;
+static int game_speed_count;
 
 // Game_State variable
 
@@ -34,57 +32,57 @@ void game_init()
 {
     Game_State = GAMESTART;
     turn = rand() % 2;
+    turn = rand() % 2;
     led_pos = turn ? 0b00000001 : 0b10000000;
+    game_speed_count = 0;
 }
 
 void game_tick(bool btn1, bool btn2)
 {
-    bool btn = sw_in_read1();
     switch (Game_State)
     {
     case GAMESTART:
         /* code */
         if (turn == 0)
         {
-            if (debounce_sw1_pressed())
+            if (btn1)
             {
                 Game_State = LEFT_TO_RIGHT;
             }
         }
         else
         {
-            if (debounce_sw2_pressed())
+            if (btn2)
             {
                 Game_State = RIGHT_TO_LEFT;
             }
         }
 
         led_pos = turn ? 0b00000001 : 0b10000000;
-        led_out_write(led_pos);
 
         break;
     case LEFT_TO_RIGHT:
+        led_pos = led_pos >> 1;
         if (led_pos == 0b00000001)
         {
             Game_State = RIGHT_SIDE;
-            break;
         }
-        led_pos = led_pos >> 1;
-        led_out_write(led_pos);
         break;
+
     case RIGHT_TO_LEFT:
+        led_pos = led_pos << 1;
         if (led_pos == 0b10000000)
         {
             Game_State = LEFT_SIDE;
-            break;
         }
-        led_pos = led_pos << 1;
-        led_out_write(led_pos);
         break;
+
     case RIGHT_SIDE:
-        if (debounce_sw2_pressed())
+        if (btn2)
         {
             Game_State = RIGHT_TO_LEFT;
+            led_pos = led_pos << 1;
+            game_speed_count++;
         }
         else
         {
@@ -92,10 +90,13 @@ void game_tick(bool btn1, bool btn2)
             turn = rand() % 2;
         }
         break;
+
     case LEFT_SIDE:
-        if (debounce_sw1_pressed())
+        if (btn1)
         {
             Game_State = LEFT_TO_RIGHT;
+            led_pos = led_pos >> 1;
+            game_speed_count++;
         }
         else
         {
@@ -103,13 +104,28 @@ void game_tick(bool btn1, bool btn2)
             turn = rand() % 2;
         }
         break;
+
     case LOST_RIGHT:
-        led_pos = 0b00000111;
+        led_out_write(0x0f);
+        sleep_ms(300);
+        led_out_write(0x00);
+        sleep_ms(300);
+        led_out_write(0x0f);
+        sleep_ms(300);
         Game_State = GAMESTART;
+        game_speed_count = 0;
         break;
+
     case LOST_LEFT:
-        led_pos = 0b11100000;
+        led_out_write(0xf0);
+        sleep_ms(300);
+        led_out_write(0x00);
+        sleep_ms(300);
+        led_out_write(0xf0);
+        sleep_ms(300);
         Game_State = GAMESTART;
+        game_speed_count = 0;
+
         break;
 
     default:
@@ -123,4 +139,21 @@ void game_tick(bool btn1, bool btn2)
 int led_state()
 {
     return led_pos;
+}
+
+int game_speed()
+{
+    switch (game_speed_count)
+    {
+    case 0:
+        return 300;
+    case 1:
+        return 250;
+    case 2:
+        return 200;
+    case 3:
+        return 150;
+    default:
+        return 100;
+    }
 }
