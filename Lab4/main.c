@@ -13,5 +13,6 @@ void main()
     {
 
         ts_test();
+        sleep_ms(100);
     }
 }
