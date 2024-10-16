@@ -3,6 +3,7 @@
 #include "TouchScreen.h"
 #include <stdio.h>
 #include "stdbool.h"
+#include "button.h"
 
 struct TSPoint p;
 char buffer[30];
@@ -33,6 +34,16 @@ void ts_lcd_init()
     p.x = 0;
     p.y = 0;
     p.z = 0;
+}
+
+void render_button(struct Button button)
+{
+    tft_fillRect(button.x, button.y, button.w, button.h, ILI9340_GREEN);
+    tft_setCursor(button.x - 12 + button.w / 2, button.y - 12 + button.h / 2);
+    tft_setTextColor(ILI9340_RED);
+    tft_setTextSize(4);
+
+    tft_write(button.c);
 }
 
 void ts_test()

@@ -7,21 +7,22 @@
 
 #define BUTTON_PRESSED_MS 100
 
-typedef struct
+struct Button
 {
     bool pressed;
-    int32_t cooldown;
     int32_t x, y, w, h;
-    unsigned short unpressed_color, pressed_color;
-    void (*on_press)();
-} Button;
+    int32_t cooldown;
+    char c;
+    // unsigned short unpressed_color, pressed_color;
+    // void (*on_press)();
+};
 
-void init_button(Button *button);
+void init_button(struct Button *button);
 
-bool is_pressed(Button *button);
+bool is_pressed(struct Button *button);
 
-bool is_in_area(Button *button, int16_t x, int16_t y);
+bool is_in_area(struct Button *button, int16_t x, int16_t y);
 
-void tick_button(Button *button);
+void tick_button(struct Button *button);
 
 #endif
