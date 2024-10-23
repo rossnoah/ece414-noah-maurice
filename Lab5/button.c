@@ -1,31 +1,51 @@
-// #include "button.h"
-// #include "stdint.h"
-// #include "stdbool.h"
+#include "button.h"
+#include "stdint.h"
+#include "stdbool.h"
 
-// void init_button(Button *button)
-// {
-//     button->pressed = false;
-//     button->cooldown = 0;
-// }
+struct Button createButton(int16_t x, int16_t y, int16_t w, int16_t h, char c)
+{
+    struct Button button;
+    button.pressed = false;
+    button.cooldown = false;
+    button.time = 0;
+    button.x = x;
+    button.y = y;
+    button.w = w;
+    button.h = h;
+    button.c = c;
 
-// bool is_pressed(Button *button)
-// {
-//     if (button->pressed)
-//     {
-//         button->cooldown = BUTTON_PRESSED_MS;
-//         return true;
-//     }
-//     return false;
-// }
+    return button;
+}
 
-// void tick_button(Button *button)
-// {
-//     if (button->cooldown > 0)
-//     {
-//         button->cooldown--;
-//     }
-// }
+bool getPressed(struct Button *button)
+{
+    return button->pressed;
+}
 
-// bool is_in_area(Button *button, int16_t x, int16_t y)
-// {
-// }
+void tick_button(struct Button *button, int16_t x, int16_t y, bool isTouched)
+{
+
+    if (button->pressed)
+    {
+        button->pressed = false;
+        button->cooldown = true;
+        return;
+    }
+
+    if (button->cooldown)
+    {
+        button->cooldown = false;
+        return;
+    }
+
+    if (isTouched && is_in_area(button, x, y))
+    {
+        button->pressed = true;
+        return;
+    }
+}
+
+bool is_in_area(struct Button *button, int16_t x, int16_t y)
+{
+    return (x > button->x && x < button->x + button->w && y > button->y && y < button->y + button->h);
+}

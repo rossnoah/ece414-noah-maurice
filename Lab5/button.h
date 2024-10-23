@@ -10,19 +10,18 @@
 struct Button
 {
     bool pressed;
-    int32_t x, y, w, h;
-    int32_t cooldown;
+    bool cooldown;
+    uint32_t x, y, w, h;
+    uint32_t time;
     char c;
     // unsigned short unpressed_color, pressed_color;
     // void (*on_press)();
 };
 
-void init_button(struct Button *button);
+struct Button createButton(int16_t x, int16_t y, int16_t w, int16_t h, char c);
 
-bool is_pressed(struct Button *button);
+bool getPressed(struct Button *button);
 
-bool is_in_area(struct Button *button, int16_t x, int16_t y);
-
-void tick_button(struct Button *button);
+void tick_button(struct Button *button, int16_t x, int16_t y, bool isTouched);
 
 #endif

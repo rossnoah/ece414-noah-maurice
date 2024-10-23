@@ -38,7 +38,10 @@ void ts_lcd_init()
 
 void render_button(struct Button button)
 {
-    tft_fillRect(button.x, button.y, button.w, button.h, ILI9340_GREEN);
+
+    uint16_t color = button->pressed ? PRESSED_COLOR : NORMAL_COLOR;
+
+    tft_fillRect(button.x, button.y, button.w, button.h, color);
     tft_setCursor(button.x - 12 + button.w / 2, button.y - 12 + button.h / 2);
     tft_setTextColor(ILI9340_RED);
     tft_setTextSize(4);

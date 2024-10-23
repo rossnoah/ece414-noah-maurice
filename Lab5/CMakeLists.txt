@@ -20,6 +20,8 @@ target_sources(Lab5 PRIVATE
     TouchScreen.c
     TFTMaster.c
     glcdfont.c
+    button.c
+    timer.c
 )
 
 # create map/bin/hex file etc.
