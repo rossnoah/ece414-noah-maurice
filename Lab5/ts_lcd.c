@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "stdbool.h"
 #include "button.h"
+#include "ts_lcd.h"
 
 struct TSPoint p;
 char buffer[30];
@@ -36,17 +37,29 @@ void ts_lcd_init()
     p.z = 0;
 }
 
-void render_button(struct Button button)
+void render_button(struct Button *button)
 {
 
-    uint16_t color = button->pressed ? PRESSED_COLOR : NORMAL_COLOR;
+    uint16_t color = button->pressed || button->cooldown ? PRESSED_COLOR : NORMAL_COLOR;
 
-    tft_fillRect(button.x, button.y, button.w, button.h, color);
-    tft_setCursor(button.x - 12 + button.w / 2, button.y - 12 + button.h / 2);
+    tft_fillRect(button->x, button->y, button->w, button->h, color);
+    tft_setCursor(button->x - 12 + button->w / 2, button->y - 12 + button->h / 2);
     tft_setTextColor(ILI9340_RED);
     tft_setTextSize(4);
 
-    tft_write(button.c);
+    tft_write(button->c);
+}
+
+void render_text(int *i)
+{
+
+    tft_fillRect(0, 0, 360, 30, ILI9340_BLACK);
+    tft_setCursor(0, 0);
+    tft_setTextColor(ILI9340_WHITE);
+    char b[30];
+
+    sprintf(b, "%i", *i);
+    tft_writeString(b);
 }
 
 void ts_test()

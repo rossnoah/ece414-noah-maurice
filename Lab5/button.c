@@ -22,6 +22,11 @@ bool getPressed(struct Button *button)
     return button->pressed;
 }
 
+bool is_in_area(struct Button *button, int16_t x, int16_t y)
+{
+    return (x > button->x && x < button->x + button->w && y > button->y && y < button->y + button->h);
+}
+
 void tick_button(struct Button *button, int16_t x, int16_t y, bool isTouched)
 {
 
@@ -32,7 +37,7 @@ void tick_button(struct Button *button, int16_t x, int16_t y, bool isTouched)
         return;
     }
 
-    if (button->cooldown)
+    if (button->cooldown && (!(isTouched && is_in_area(button, x, y))))
     {
         button->cooldown = false;
         return;
@@ -43,9 +48,4 @@ void tick_button(struct Button *button, int16_t x, int16_t y, bool isTouched)
         button->pressed = true;
         return;
     }
-}
-
-bool is_in_area(struct Button *button, int16_t x, int16_t y)
-{
-    return (x > button->x && x < button->x + button->w && y > button->y && y < button->y + button->h);
 }
