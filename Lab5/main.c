@@ -28,29 +28,19 @@ struct calculator
 
 void addToOpperand(int32_t *opperand, int value)
 {
-
-    if (*opperand * 10 + value < *opperand)
+    int result = *opperand * 10 + value;
+    if (((*opperand > 0) && (result < *opperand)) || result > INT32_MAX)
     {
         return; // dont do anything because we are at the max number so just ignore the input
     }
-    *opperand = *opperand * 10 + value; // set the value
+    *opperand = result; // set the value
 }
-
-// bool pressed;
-// int32_t cooldown;
-// int32_t x, y, w, h;
-// unsigned short unpressed_color, pressed_color;
-// void (*on_press)();
 
 int btnCnt = 0;
 
 uint32_t current_time, button_debounce_time;
 
 struct Button buttons[16];
-
-// struct Button b1 = {false, 0, 0, 90, 50, 100, '7'};
-// struct Button b2 = {false, 90, 0, 90, 50, 100, '8'};
-// struct Button b3 = {false, 180, 0, 90, 50, 100, '9'};
 
 void initButton(struct Button b)
 {
@@ -62,19 +52,24 @@ void main()
 
     int32_t opperand1 = 0;
 
-    // initButton(b1);
-    // initButton(b2);
-    // initButton(b3);
-    // struct Button b1 = {false, 0, 0, 90, 50, 100, '7'};
-    // struct Button b2 = {false, 90, 0, 90, 50, 100, '8'};
-    // struct Button b3 = {false, 180, 0, 90, 50, 100, '9'};
-    initButton(createButton(0, 40, 90, 50, '7'));
-    initButton(createButton(90, 40, 90, 50, '8'));
-    initButton(createButton(180, 40, 90, 50, '9'));
-    initButton(createButton(0, 50 * 1 + 40, 90, 50, '4'));
-    initButton(createButton(0, 50 * 2 + 40, 90, 50, '1'));
-    initButton(createButton(0, 50 * 3 + 40, 90, 50, '0'));
+    initButton(createButton(0, 40, 83, 50, '7'));
+    initButton(createButton(83, 40, 83, 50, '8'));
+    initButton(createButton(83 * 2, 40, 83, 50, '9'));
+    initButton(createButton(0, 50 * 1 + 40, 83, 50, '4'));
+    initButton(createButton(83, 50 * 1 + 40, 83, 50, '5'));
+    initButton(createButton(83 * 2, 50 * 1 + 40, 83, 50, '6'));
 
+    initButton(createButton(0, 50 * 2 + 40, 83, 50, '1'));
+    initButton(createButton(83, 50 * 2 + 40, 83, 50, '2'));
+    initButton(createButton(83 * 2, 50 * 2 + 40, 83, 50, '3'));
+    initButton(createButton(0, 50 * 3 + 40, 83, 50, '0'));
+    // the next set of buttons
+    initButton(createButton(83 * 3, 50 * 0 + 40, 83, 50, '+'));
+    initButton(createButton(83 * 3, 50 * 1 + 40, 83, 50, '-'));
+    initButton(createButton(83 * 3, 50 * 2 + 40, 83, 50, '/'));
+    initButton(createButton(83 * 3, 50 * 3 + 40, 83, 50, 'x'));
+    initButton(createButton(83 * 2, 50 * 3 + 40, 83, 50, 'C'));
+    initButton(createButton(83 * 1, 50 * 3 + 40, 83, 50, '='));
     ts_lcd_init();
 
     current_time = timer_read();
@@ -100,10 +95,12 @@ void main()
 
         for (int i = 0; i < btnCnt; i++)
         {
-            if (!buttons[i].pressed)
-                continue;
-            int value = buttons[i].c & 0b00001111;
-            addToOpperand(&opperand1, value);
+            if (buttons[i].pressed)
+            {
+
+                int value = buttons[i].c & 0b00001111;
+                addToOpperand(&opperand1, value);
+            }
         }
 
         for (int i = 0; i < btnCnt; i++)
@@ -113,6 +110,6 @@ void main()
 
         render_text(&opperand1);
 
-        ts_test();
+        // ts_test();
     }
 }

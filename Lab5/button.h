@@ -5,7 +5,7 @@
 #ifndef BUTTON_H
 #define BUTTON_H
 
-#define BUTTON_PRESSED_MS 300
+#define BUTTON_PRESSED_MS 1000
 
 struct Button
 {

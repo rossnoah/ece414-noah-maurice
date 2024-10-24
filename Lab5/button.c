@@ -21,7 +21,9 @@ bool getPressed(struct Button *button)
 {
     return button->pressed;
 }
-
+char getButtonChar(struct Button *button){
+    return button->c;
+}
 bool is_in_area(struct Button *button, int16_t x, int16_t y)
 {
     return (x > button->x && x < button->x + button->w && y > button->y && y < button->y + button->h);
