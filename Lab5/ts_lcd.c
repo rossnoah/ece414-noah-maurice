@@ -5,7 +5,7 @@
 #include "stdbool.h"
 #include "button.h"
 #include "ts_lcd.h"
-
+#include "string.h"
 struct TSPoint p;
 char buffer[30];
 uint16_t x, y;
@@ -55,8 +55,8 @@ void render_text_number(int32_t *i)
     tft_fillRect(0, 0, 360, 30, ILI9340_BLACK);
     char b[30];
     sprintf(b, "%i", *i);
-    int textWidth = strlen(b) * 6;
-    tft_setCursor(360 - textWidth - 20, 0);
+    int textWidth = strlen(b) * 24;
+    tft_setCursor(360 - textWidth - 60, 0);
     tft_setTextColor(ILI9340_WHITE);
     tft_writeString(b);
 }
@@ -64,8 +64,8 @@ void render_text_number(int32_t *i)
 void render_text(char *c)
 {
     tft_fillRect(0, 0, 360, 30, ILI9340_BLACK);
-    int textWidth = strlen(c) * 6;
-    tft_setCursor(360 - textWidth - 20, 0);
+    int textWidth = strlen(c) * 24;
+    tft_setCursor(360 - textWidth - 60, 0);
     tft_setTextColor(ILI9340_WHITE);
     tft_writeString(c);
 }

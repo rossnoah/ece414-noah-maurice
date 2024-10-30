@@ -29,6 +29,7 @@ enum STATE
     INPUT_OPERATOR,
     INPUT_OPERAND,
     ERROR_STATE,
+    DIV0_STATE,
     EQUAL_STATE,
 };
 
@@ -64,14 +65,15 @@ void clearCalc(struct calc *c)
     c->hasEnteredNum2 = false;
 }
 
-void addToOperand(int32_t *operand, int value)
+int addToOperand(int32_t *operand, int value)
 {
     int result = *operand * 10 + value;
     if (((*operand > 0) && (result < *operand)) || result > INT32_MAX)
     {
-        return; // dont do anything because we are at the max number so just ignore the input
+        return 1; // return 1 to indicate error
     }
     *operand = result; // set the value
+    return 0;
 }
 
 int btnCnt = 0;
@@ -195,7 +197,10 @@ void main()
             case INITIAL_STATE:
                 if (actionType == NUMBER)
                 {
-                    addToOperand(&c.num1, value);
+                    if (addToOperand(&c.num1, value) == 1)
+                    {
+                        goto error;
+                    }
                 }
                 else if (actionType == OPERATOR)
                 {
@@ -214,7 +219,10 @@ void main()
 
                     // swapActiveOperand(&c);
                     c.active_operand = &c.num2;
-                    addToOperand(c.active_operand, value);
+                    if (addToOperand(c.active_operand, value) == 1)
+                    {
+                        goto error;
+                    }
                     c.state = INPUT_OPERAND;
                     c.hasEnteredNum2 = true;
                 }
@@ -224,7 +232,10 @@ void main()
                 {
                     c.active_operand = &c.num2;
 
-                    addToOperand(c.active_operand, value);
+                    if (addToOperand(c.active_operand, value) == 1)
+                    {
+                        goto error;
+                    }
                     c.hasEnteredNum2 = true;
                 }
                 else if (actionType == OPERATOR)
@@ -232,17 +243,24 @@ void main()
 
                     if (c.hasEnteredNum2)
                     {
+                        int32_t start = c.num1;
                         // run the operation in c.operator on the numbers and store in c.num1
                         switch (c.operator)
                         {
                         case ADD:
                             c.num1 = c.num1 + c.num2;
+                            if (start > c.num1)
+                                goto error;
                             break;
                         case SUB:
                             c.num1 = c.num1 - c.num2;
+                            if (start < c.num1)
+                                goto error;
                             break;
                         case MUL:
                             c.num1 = c.num1 * c.num2;
+                            if (start > c.num1)
+                                goto error;
                             break;
                         case DIV:
                             if (c.num2 != 0)
@@ -251,7 +269,7 @@ void main()
                             }
                             else
                             {
-                                c.state = ERROR_STATE;
+                                goto divzero;
                             }
                             break;
                         default:
@@ -272,6 +290,15 @@ void main()
                     }
                 }
                 break;
+                if (0)
+                {
+                error:
+                    c.state = ERROR_STATE;
+                    break;
+                divzero:
+                    c.state = DIV0_STATE;
+                    break;
+                }
             }
         }
 
@@ -281,11 +308,6 @@ void main()
         }
 
         // display based on state
-        // INITIAL_STATE,
-        // INPUT_OPERATOR,
-        // INPUT_OPERAND,
-        // ERROR_STATE,
-        // EQUAL_STATE,
         switch (c.state)
         {
         case EQUAL_STATE:
@@ -293,7 +315,10 @@ void main()
             render_text_number(&c.num1);
             break;
         case ERROR_STATE:
-            render_text("Error");
+            render_text("ERROR");
+            break;
+        case DIV0_STATE:
+            render_text("DIV0");
             break;
         case INPUT_OPERAND:
             render_text_number(c.active_operand);
