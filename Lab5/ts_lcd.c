@@ -50,7 +50,7 @@ void render_button(struct Button *button)
     tft_write(button->c);
 }
 
-void render_text_number(int *i)
+void render_text_number(int32_t *i)
 {
 
     tft_fillRect(0, 0, 360, 30, ILI9340_BLACK);

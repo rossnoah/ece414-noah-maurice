@@ -21,7 +21,7 @@ enum ACTIONTYPE
 {
     NUMBER,
     OPERATOR,
-} actionType = NUMBER;
+} actionType;
 
 enum STATE
 {
@@ -39,6 +39,7 @@ struct calc
     int32_t *active_operand;
     enum OPERATOR operator;
     enum STATE state;
+    bool hasEnteredNum2;
 } c;
 
 void swapActiveOperand(struct calc *c)
@@ -60,6 +61,7 @@ void clearCalc(struct calc *c)
     c->num2 = 0;
     c->active_operand = &c->num1;
     c->operator= EQUAL;
+    c->hasEnteredNum2 = false;
 }
 
 void addToOperand(int32_t *operand, int value)
@@ -137,43 +139,45 @@ void main()
             }
 
             int value = buttons[i].c & 0b00001111;
-            if (value >= 0 && value <= 9)
-            {
-                actionType = NUMBER;
-            }
-            else
-            {
-                actionType = OPERATOR;
-            }
-
+            enum ACTIONTYPE actionType = NUMBER;
             // assign the operator based on the char of the button pressed
             enum OPERATOR operator= CLEAR;
-            if (actionType == OPERATOR)
+
+            switch (buttons[i].c)
             {
-                switch (buttons[i].c)
-                {
-                case '+':
-                    operator= ADD;
-                    break;
-                case '-':
-                    operator= SUB;
-                    break;
-                case '/':
-                    operator= DIV;
-                    break;
-                case 'x':
-                    operator= MUL;
-                    break;
-                case '=':
-                    operator= EQUAL;
-                    break;
-                case 'C':
-                case 'c':
-                    operator= CLEAR;
-                    break;
-                default:
-                    break;
-                }
+            case '+':
+                operator= ADD;
+                actionType = OPERATOR;
+
+                break;
+            case '-':
+                operator= SUB;
+                actionType = OPERATOR;
+
+                break;
+            case '/':
+                operator= DIV;
+                actionType = OPERATOR;
+
+                break;
+            case 'x':
+                operator= MUL;
+                actionType = OPERATOR;
+
+                break;
+            case '=':
+                operator= EQUAL;
+                actionType = OPERATOR;
+
+                break;
+            case 'C':
+            case 'c':
+                operator= CLEAR;
+                actionType = OPERATOR;
+
+                break;
+            default:
+                break;
             }
 
             if (actionType == OPERATOR && operator== CLEAR)
@@ -184,22 +188,20 @@ void main()
 
             switch (c.state)
             {
-            case EQUAL:
+            case EQUAL_STATE:
                 clearCalc(&c);
                 // continue to initial state
 
             case INITIAL_STATE:
                 if (actionType == NUMBER)
                 {
-                    addToOperand(c.active_operand, value);
+                    addToOperand(&c.num1, value);
                 }
                 else if (actionType == OPERATOR)
                 {
-                    if (operator== EQUAL)
 
-                        c.state = INPUT_OPERATOR;
+                    c.state = INPUT_OPERATOR;
                     c.operator= operator;
-                    swapActiveOperand(c);
                 }
                 break;
             case INPUT_OPERATOR:
@@ -209,42 +211,52 @@ void main()
                 }
                 else if (actionType == NUMBER)
                 {
+
+                    // swapActiveOperand(&c);
+                    c.active_operand = &c.num2;
                     addToOperand(c.active_operand, value);
                     c.state = INPUT_OPERAND;
+                    c.hasEnteredNum2 = true;
                 }
                 break;
             case INPUT_OPERAND:
                 if (actionType == NUMBER)
                 {
+                    c.active_operand = &c.num2;
+
                     addToOperand(c.active_operand, value);
+                    c.hasEnteredNum2 = true;
                 }
                 else if (actionType == OPERATOR)
                 {
 
-                    // run the operation in c.operator on the numbers and store in c.num1
-                    switch (c.operator)
+                    if (c.hasEnteredNum2)
                     {
-                    case ADD:
-                        c.num1 = c.num1 + c.num2;
-                        break;
-                    case SUB:
-                        c.num1 = c.num1 - c.num2;
-                        break;
-                    case MUL:
-                        c.num1 = c.num1 * c.num2;
-                        break;
-                    case DIV:
-                        if (c.num2 != 0)
+                        // run the operation in c.operator on the numbers and store in c.num1
+                        switch (c.operator)
                         {
-                            c.num1 = c.num1 / c.num2;
+                        case ADD:
+                            c.num1 = c.num1 + c.num2;
+                            break;
+                        case SUB:
+                            c.num1 = c.num1 - c.num2;
+                            break;
+                        case MUL:
+                            c.num1 = c.num1 * c.num2;
+                            break;
+                        case DIV:
+                            if (c.num2 != 0)
+                            {
+                                c.num1 = c.num1 / c.num2;
+                            }
+                            else
+                            {
+                                c.state = ERROR_STATE;
+                            }
+                            break;
+                        default:
+                            break;
                         }
-                        else
-                        {
-                            c.state = ERROR_STATE;
-                        }
-                        break;
-                    default:
-                        break;
                     }
 
                     if (operator== EQUAL)
@@ -255,7 +267,8 @@ void main()
                     {
                         c.operator= operator;
                         c.state = INPUT_OPERATOR;
-                        swapActiveOperand(&c);
+                        c.num2 = 0;
+                        // swapActiveOperand(&c);
                     }
                 }
                 break;
