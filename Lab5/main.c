@@ -7,7 +7,7 @@
 #include "button.h"
 #include "timer.h"
 
-enum OPPERATOR
+enum OPERATOR
 {
     ADD,
     SUB,
@@ -17,23 +17,59 @@ enum OPPERATOR
     EQUAL,
 };
 
-struct calculator
+enum ACTIONTYPE
 {
-    int32_t opperand1;
-    int32_t opperand2;
-    enum OPPERATOR operator;
-    char display[30];
-    bool hasError;
+    NUMBER,
+    OPERATOR,
+} actionType = NUMBER;
+
+enum STATE
+{
+    INITIAL_STATE,
+    INPUT_OPERATOR,
+    INPUT_OPERAND,
+    ERROR_STATE,
+    EQUAL_STATE,
 };
 
-void addToOpperand(int32_t *opperand, int value)
+struct calc
 {
-    int result = *opperand * 10 + value;
-    if (((*opperand > 0) && (result < *opperand)) || result > INT32_MAX)
+    int32_t num1;
+    int32_t num2;
+    int32_t *active_operand;
+    enum OPERATOR operator;
+    enum STATE state;
+} c;
+
+void swapActiveOperand(struct calc *c)
+{
+    if (c->active_operand == &c->num1)
+    {
+        c->active_operand = &c->num2;
+    }
+    else
+    {
+        c->active_operand = &c->num1;
+    }
+}
+
+void clearCalc(struct calc *c)
+{
+    c->state = INITIAL_STATE;
+    c->num1 = 0;
+    c->num2 = 0;
+    c->active_operand = &c->num1;
+    c->operator= EQUAL;
+}
+
+void addToOperand(int32_t *operand, int value)
+{
+    int result = *operand * 10 + value;
+    if (((*operand > 0) && (result < *operand)) || result > INT32_MAX)
     {
         return; // dont do anything because we are at the max number so just ignore the input
     }
-    *opperand = result; // set the value
+    *operand = result; // set the value
 }
 
 int btnCnt = 0;
@@ -50,7 +86,7 @@ void initButton(struct Button b)
 void main()
 {
 
-    int32_t opperand1 = 0;
+    clearCalc(&c);
 
     initButton(createButton(0, 40, 83, 50, '7'));
     initButton(createButton(83, 40, 83, 50, '8'));
@@ -70,6 +106,7 @@ void main()
     initButton(createButton(83 * 3, 50 * 3 + 40, 83, 50, 'x'));
     initButton(createButton(83 * 2, 50 * 3 + 40, 83, 50, 'C'));
     initButton(createButton(83 * 1, 50 * 3 + 40, 83, 50, '='));
+
     ts_lcd_init();
 
     current_time = timer_read();
@@ -80,7 +117,6 @@ void main()
 
     while (1)
     {
-
         current_time = timer_read();
         uint16_t x, y;
         bool isTouched = get_ts_lcd(&x, &y);
@@ -95,11 +131,134 @@ void main()
 
         for (int i = 0; i < btnCnt; i++)
         {
-            if (buttons[i].pressed)
+            if (!buttons[i].pressed)
             {
+                continue;
+            }
 
-                int value = buttons[i].c & 0b00001111;
-                addToOpperand(&opperand1, value);
+            int value = buttons[i].c & 0b00001111;
+            if (value >= 0 && value <= 9)
+            {
+                actionType = NUMBER;
+            }
+            else
+            {
+                actionType = OPERATOR;
+            }
+
+            // assign the operator based on the char of the button pressed
+            enum OPERATOR operator= CLEAR;
+            if (actionType == OPERATOR)
+            {
+                switch (buttons[i].c)
+                {
+                case '+':
+                    operator= ADD;
+                    break;
+                case '-':
+                    operator= SUB;
+                    break;
+                case '/':
+                    operator= DIV;
+                    break;
+                case 'x':
+                    operator= MUL;
+                    break;
+                case '=':
+                    operator= EQUAL;
+                    break;
+                case 'C':
+                case 'c':
+                    operator= CLEAR;
+                    break;
+                default:
+                    break;
+                }
+            }
+
+            if (actionType == OPERATOR && operator== CLEAR)
+            {
+                clearCalc(&c);
+                break;
+            }
+
+            switch (c.state)
+            {
+            case EQUAL:
+                clearCalc(&c);
+                // continue to initial state
+
+            case INITIAL_STATE:
+                if (actionType == NUMBER)
+                {
+                    addToOperand(c.active_operand, value);
+                }
+                else if (actionType == OPERATOR)
+                {
+                    if (operator== EQUAL)
+
+                        c.state = INPUT_OPERATOR;
+                    c.operator= operator;
+                    swapActiveOperand(c);
+                }
+                break;
+            case INPUT_OPERATOR:
+                if (actionType == OPERATOR)
+                {
+                    c.operator= operator;
+                }
+                else if (actionType == NUMBER)
+                {
+                    addToOperand(c.active_operand, value);
+                    c.state = INPUT_OPERAND;
+                }
+                break;
+            case INPUT_OPERAND:
+                if (actionType == NUMBER)
+                {
+                    addToOperand(c.active_operand, value);
+                }
+                else if (actionType == OPERATOR)
+                {
+
+                    // run the operation in c.operator on the numbers and store in c.num1
+                    switch (c.operator)
+                    {
+                    case ADD:
+                        c.num1 = c.num1 + c.num2;
+                        break;
+                    case SUB:
+                        c.num1 = c.num1 - c.num2;
+                        break;
+                    case MUL:
+                        c.num1 = c.num1 * c.num2;
+                        break;
+                    case DIV:
+                        if (c.num2 != 0)
+                        {
+                            c.num1 = c.num1 / c.num2;
+                        }
+                        else
+                        {
+                            c.state = ERROR_STATE;
+                        }
+                        break;
+                    default:
+                        break;
+                    }
+
+                    if (operator== EQUAL)
+                    {
+                        c.state = EQUAL_STATE;
+                    }
+                    else
+                    {
+                        c.operator= operator;
+                        c.state = INPUT_OPERATOR;
+                        swapActiveOperand(&c);
+                    }
+                }
+                break;
             }
         }
 
@@ -108,8 +267,47 @@ void main()
             render_button(&buttons[i]);
         }
 
-        render_text(&opperand1);
+        // display based on state
+        // INITIAL_STATE,
+        // INPUT_OPERATOR,
+        // INPUT_OPERAND,
+        // ERROR_STATE,
+        // EQUAL_STATE,
+        switch (c.state)
+        {
+        case EQUAL_STATE:
+        case INITIAL_STATE:
+            render_text_number(&c.num1);
+            break;
+        case ERROR_STATE:
+            render_text("Error");
+            break;
+        case INPUT_OPERAND:
+            render_text_number(c.active_operand);
+            break;
 
-        // ts_test();
+        case INPUT_OPERATOR:
+            switch (c.operator)
+            {
+            case ADD:
+                render_text("+");
+                break;
+            case SUB:
+                render_text("-");
+                break;
+            case MUL:
+                render_text("*");
+                break;
+            case DIV:
+                render_text("/");
+                break;
+            default:
+                break;
+            }
+            break;
+
+        default:
+            break;
+        }
     }
 }

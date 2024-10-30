@@ -10,3 +10,6 @@ void ts_lcd_init();
 void ts_test();
 
 void render_button();
+void render_text(char *c);
+
+void render_text_number(int *i);
