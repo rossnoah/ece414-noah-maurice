@@ -71,7 +71,7 @@ void main()
             last_rpm_time = current_time;
         }
 
-        displayHistogram(&pwmHistogram, 0);
+        displayHistogram(pwmHistogram, 0);
 
         if (uart_is_readable(uart0))
         {
