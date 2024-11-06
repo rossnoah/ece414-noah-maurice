@@ -44,7 +44,7 @@ void displayHistogram(int array[], int value)
 
     for (int i = 0; i < 32; i++)
     {
-        int height = (array[i] * 64) / 0xFFFF;
+        int height = (array[31 - i] * 64) / 0xFFFF;
         tft_fillRect(i * 6 + 1, 100, 4, height, ILI9340_MAGENTA);
     }
 }
