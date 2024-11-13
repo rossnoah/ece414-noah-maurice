@@ -10,7 +10,7 @@
 
 #include "pico/stdlib.h"
 
-#define PWM_PIN 7
+#define PWM_PIN 14
 
 // Initialize pin 24 as a basic PWM output
 void pwm_pin_init(uint16_t level);

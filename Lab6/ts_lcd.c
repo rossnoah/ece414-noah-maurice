@@ -3,12 +3,27 @@
 #include "TouchScreen.h"
 #include <stdio.h>
 #include "stdbool.h"
-#include "button.h"
 #include "ts_lcd.h"
 #include "string.h"
 struct TSPoint p;
 char buffer[30];
 uint16_t x, y;
+
+static inline int32_t max(uint32_t a, uint32_t b)
+{
+    if (a > b)
+        return a;
+    else
+        return b;
+}
+
+static inline int32_t min(uint32_t a, uint32_t b)
+{
+    if (a < b)
+        return a;
+    else
+        return b;
+}
 
 bool get_ts_lcd(uint16_t *px, uint16_t *py)
 {
@@ -31,8 +46,8 @@ void displayHistogram(int array[], int value)
 
     int currentValue = array[0];
 
-    tft_setCursor(20, 100);
-    tft_setTextSize(2);
+    tft_setCursor(200, 200);
+    tft_setTextSize(3);
 
     tft_setTextColor(ILI9340_BLACK);
     sprintf(buffer, "Value: %i", array[1]);
@@ -42,10 +57,17 @@ void displayHistogram(int array[], int value)
     sprintf(buffer, "Value: %i", array[0]);
     tft_writeString(buffer);
 
+    int maxVal = value ? 3500 : 0xFFFF;
     for (int i = 0; i < 32; i++)
     {
-        int height = (array[31 - i] * 64) / 0xFFFF;
-        tft_fillRect(i * 6 + 1, 100, 4, height, ILI9340_MAGENTA);
+        int height = 128;
+        tft_fillRect(i * 6 + 1, 128 - height + 128 * value, 4, height, ILI9340_BLACK);
+    }
+    for (int i = 0; i < 32; i++)
+    {
+        int height = (array[31 - i] * 128) / maxVal;
+
+        tft_fillRect(i * 6 + 1, 128 - height + 128 * value, 4, height, value == 0 ? ILI9340_MAGENTA : ILI9340_YELLOW);
     }
 }
 

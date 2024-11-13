@@ -15,10 +15,10 @@ target_link_libraries(Lab6
     hardware_irq
     hardware_pwm
     pico_bootsel_via_double_reset
-    pwm_pin
-    PIO_input_capture_2a
-    ic
-    ic_pio
+
+    # PIO_input_capture_2a
+    # ic
+    # ic_pio
 )
 
 target_sources(Lab6 PRIVATE
@@ -28,6 +28,8 @@ target_sources(Lab6 PRIVATE
     TFTMaster.c
     glcdfont.c
     timer.c
+    pwm_pin.c
+    ic_pio.c
 )
 
 # create map/bin/hex file etc.

@@ -4,12 +4,10 @@
 #include "stdlib.h"
 #include "ts_lcd.h"
 #include "limits.h"
-#include "button.h"
 #include "timer.h"
-#include "ic.h"
 #include "pwm_pin.h"
-
-int btnCnt = 0;
+#include "stdio.h"
+#include "ic.h"
 
 uint32_t current_time, last_update_time, last_rpm_time;
 
@@ -44,6 +42,7 @@ void main()
     current_time = last_update_time = last_rpm_time = timer_read(); // init timer values
 
     int pwmHistogram[32] = {0};
+    int rpmHistogram[32] = {0};
 
     while (1)
     {
@@ -67,11 +66,23 @@ void main()
         if (timer_elapsed_ms(last_rpm_time, current_time) >= 1000)
         {
             uint32_t rpm = ic_getrpm();
+            if (rpm > 10000)
+            {
+                rpm = 0;
+            }
             printf("rpm=%u\n", rpm);
+
+            for (int i = 31; i > 0; i--)
+            {
+                rpmHistogram[i] = rpmHistogram[i - 1];
+            }
+            rpmHistogram[0] = pwm_level;
+
             last_rpm_time = current_time;
         }
 
         displayHistogram(pwmHistogram, 0);
+        displayHistogram(rpmHistogram, 1);
 
         if (uart_is_readable(uart0))
         {
