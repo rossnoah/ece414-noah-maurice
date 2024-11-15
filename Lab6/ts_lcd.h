@@ -10,3 +10,5 @@ void ts_lcd_init();
 void ts_test();
 
 void displayHistogram(int array[], int value);
+
+void clearDisplay();

@@ -45,32 +45,39 @@ void displayHistogram(int array[], int value)
     int heightOffset = 120 * value;
 
     int currentValue = array[0];
+    int maxHeight = 120;
 
-    tft_setCursor(200, 200);
-    tft_setTextSize(3);
+    int maxVal = value ? 4000 : 0xFFFF;
+    // for (int i = 0; i < 32; i++)
+    // {
+    //     int height = 128;
+    //     tft_fillRect(i * 6 + 1, 128 - height + 128 * value, 4, height, ILI9340_BLACK);
+    // }
+    for (int i = 0; i < 32; i++)
+    {
+        int height = (array[31 - i] * maxHeight) / maxVal;
+        // printf("thing2: %i value: %i", value, array[31 - i]);
+        // printf("thing1: %i value: %i", value, height);
 
-    tft_setTextColor(ILI9340_BLACK);
-    sprintf(buffer, "Value: %i", array[1]);
-    tft_writeString(buffer); // erase old text
+        tft_fillRect(i * 6 + 1, maxHeight - height + maxHeight * value, 4, height, value == 0 ? ILI9340_MAGENTA : ILI9340_YELLOW);
+    }
+
+    tft_setCursor(130, 60 + maxHeight * value);
+    tft_setTextSize(2);
+
+    // tft_setTextColor(ILI9340_BLACK);
+    // sprintf(buffer, "Value: %i", array[1]);
+    // tft_writeString(buffer); // erase old text
 
     tft_setTextColor(ILI9340_WHITE);
     sprintf(buffer, "Value: %i", array[0]);
     tft_writeString(buffer);
-
-    int maxVal = value ? 3500 : 0xFFFF;
-    for (int i = 0; i < 32; i++)
-    {
-        int height = 128;
-        tft_fillRect(i * 6 + 1, 128 - height + 128 * value, 4, height, ILI9340_BLACK);
-    }
-    for (int i = 0; i < 32; i++)
-    {
-        int height = (array[31 - i] * 128) / maxVal;
-
-        tft_fillRect(i * 6 + 1, 128 - height + 128 * value, 4, height, value == 0 ? ILI9340_MAGENTA : ILI9340_YELLOW);
-    }
 }
 
+void clearDisplay()
+{
+    tft_fillScreen(ILI9340_BLACK);
+}
 void ts_lcd_init()
 {
     tft_init_hw();
