@@ -47,6 +47,7 @@ void main()
     uint16_t desiredRPM = 1000;
     uint16_t currentRPM = 0;
     uint16_t previousRPM = 0;
+    int32_t integral = 0;
 
     while (1)
     {
@@ -94,19 +95,22 @@ void main()
             display_timer = current_time;
         }
 
-        if (timer_elapsed_ms(display_timer, pid_timer) >= 50)
+        if (timer_elapsed_ms(pid_timer, current_time) >= 50)
         {
-            uint16_t currentRPM = ic_getrpm();
-            uint16_t error = currentRPM - desiredRPM;
-            uint16_t deriv = previousRPM - currentRPM;
+            currentRPM = ic_getrpm();
+            int32_t error = desiredRPM - currentRPM;
+            int32_t deriv = currentRPM - previousRPM;
+            integral += error;
 
-            uint16_t Kp = 500;
-            uint16_t Kd = 1000;
+            uint16_t Kp = 200;
+            uint16_t Kd = 50;
+            uint16_t Ki = 10;
 
-            pwm_level = Kp * error - Kd * deriv;
+            int32_t pid_output = Kp * error + Ki * integral - Kd * deriv;
+            pwm_level = min(max(pwm_level + pid_output, 0), 0xffff);
 
             previousRPM = currentRPM;
-            display_timer = current_time;
+            pid_timer = current_time;
         }
 
         if (uart_is_readable(uart0))
