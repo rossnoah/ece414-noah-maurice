@@ -27,6 +27,8 @@ static inline int32_t min(uint32_t a, uint32_t b)
         return b;
 }
 
+char input_state = 'x';
+
 void main()
 {
     stdio_init_all(); // stdo all ports
@@ -48,6 +50,10 @@ void main()
     uint16_t currentRPM = 0;
     uint16_t previousRPM = 0;
     int32_t integral = 0;
+
+    uint16_t Kp = 200;
+    uint16_t Kd = 50;
+    uint16_t Ki = 10;
 
     while (1)
     {
@@ -102,10 +108,6 @@ void main()
             int32_t deriv = currentRPM - previousRPM;
             integral += error;
 
-            uint16_t Kp = 200;
-            uint16_t Kd = 50;
-            uint16_t Ki = 10;
-
             int32_t pid_output = Kp * error + Ki * integral - Kd * deriv;
             pwm_level = min(max(pwm_level + pid_output, 0), 0xffff);
 
@@ -117,26 +119,57 @@ void main()
         {
             char c = getchar();
             putchar(c);
-            if (c == '+')
+
+            if (input_state == 'x')
             {
-                pwm_level = min(pwm_level + 0x1000, 0xffff);
+                if (c == 's')
+                {
+                    input_state = 's';
+                    printf("Enter RPM Value:\n");
+                }
+                else if (c == 'p')
+                {
+                    input_state = 'p';
+                    printf("Enter Kp Value:\n");
+                }
+                else if (c == 'i')
+                {
+                    input_state = 'i';
+                    printf("Enter Ki Value:\n");
+                }
+                else if (c == 'd')
+                {
+                    input_state = 'd';
+                    printf("Enter Kd Value:\n");
+                }
             }
-            else if (c == '-')
+
+            if (input_state != 'x')
             {
-                pwm_level = max(pwm_level - 0x1000, 0);
+                int value = 0;
+                if (sscanf(&c, "%d", &value) == 1)
+                {
+
+                    if (input_state == 's')
+                    {
+                        desiredRPM = value;
+                    }
+                    if (input_state == 'p')
+                    {
+                        Kp = value;
+                    }
+                    else if (input_state == 'i')
+                    {
+                        Ki = value;
+                    }
+                    else if (input_state == 'd')
+                    {
+                        Kd = value;
+                    }
+                    input_state = 'x';
+                    printf("\n");
+                }
             }
-            else if (c == '0')
-            {
-                pwm_level = 0;
-            }
-            else if (c == 'f')
-            {
-                pwm_level = 0xffff;
-            }
-            else
-                printf("?\n");
-            printf("\nSetting PWM level to 0x%x\n", pwm_level);
-            pwm_pin_set_level(pwm_level);
         }
     }
 }
