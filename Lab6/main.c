@@ -51,9 +51,9 @@ void main()
     uint16_t previousRPM = 0;
     int32_t integral = 0;
 
-    uint16_t Kp = 200;
-    uint16_t Kd = 50;
-    uint16_t Ki = 10;
+    uint16_t Kp = 10;
+    uint16_t Kd = 5;
+    uint16_t Ki = 0;
 
     while (1)
     {
@@ -81,7 +81,7 @@ void main()
             {
                 rpmVal = 0;
             }
-            printf("rpm=%u\n", rpmVal);
+            // printf("rpm=%u\n", rpmVal);
 
             for (int i = 31; i > 0; i--)
             {
@@ -101,7 +101,7 @@ void main()
             display_timer = current_time;
         }
 
-        if (timer_elapsed_ms(pid_timer, current_time) >= 50)
+        if (timer_elapsed_ms(pid_timer, current_time) >= 200)
         {
             currentRPM = ic_getrpm();
             int32_t error = desiredRPM - currentRPM;
@@ -110,6 +110,9 @@ void main()
 
             int32_t pid_output = Kp * error + Ki * integral - Kd * deriv;
             pwm_level = min(max(pwm_level + pid_output, 0), 0xffff);
+            pwm_pin_set_level(pwm_level);
+
+            printf("current rpm %i\nerror: %i\npwm_out: %i\nnew pwm:%i\n\n\n", currentRPM, error, pid_output, pwm_level);
 
             previousRPM = currentRPM;
             pid_timer = current_time;
