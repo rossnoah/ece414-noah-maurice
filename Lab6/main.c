@@ -9,9 +9,9 @@
 #include "stdio.h"
 #include "ic.h"
 
-uint32_t current_time, last_update_time, last_rpm_time, display_timer, pid_timer;
+int current_time, last_update_time, last_rpm_time, display_timer, pid_timer;
 
-static inline int32_t max(uint32_t a, uint32_t b)
+static inline int max(int a, int b)
 {
     if (a > b)
         return a;
@@ -19,7 +19,7 @@ static inline int32_t max(uint32_t a, uint32_t b)
         return b;
 }
 
-static inline int32_t min(uint32_t a, uint32_t b)
+static inline int min(int a, int b)
 {
     if (a < b)
         return a;
@@ -27,15 +27,17 @@ static inline int32_t min(uint32_t a, uint32_t b)
         return b;
 }
 
-char input_state = 'x';
+char input_state;
 
 void main()
 {
+    input_state = 'x';
     stdio_init_all(); // stdo all ports
 
-    uint16_t pwm_level = 0x8000; // start with a 50% duty cycle
-    pwm_pin_init(pwm_level);     // init PWM
-    printf("Setting OC limit to %x\n", pwm_level);
+    int pwm_level = 0x8000;  // start with a 50% duty cycle
+    pwm_pin_init(pwm_level); // init PWM
+    // printf("Setting OC limit to %x\n", pwm_level);
+    printf("Press S, P, I, D to adjust speed, p, i, d values.");
 
     ic_init(); // init the input capture to get the rpm speed
 
@@ -46,14 +48,16 @@ void main()
     int pwmHistogram[32] = {0};
     int rpmHistogram[32] = {0};
 
-    uint16_t desiredRPM = 1000;
-    uint16_t currentRPM = 0;
-    uint16_t previousRPM = 0;
-    int32_t integral = 0;
+    double desiredRPM = 1000;
+    int currentRPM = 0;
+    int previousRPM = 0;
+    int integral = 0;
 
-    uint16_t Kp = 10;
-    uint16_t Kd = 5;
-    uint16_t Ki = 0;
+    double Kp = 20;
+    double Kd = 30;
+    double Ki = 1.5;
+
+    int integral_limit = 10000;
 
     while (1)
     {
@@ -76,7 +80,7 @@ void main()
 
         if (timer_elapsed_ms(last_rpm_time, current_time) >= 1000)
         {
-            uint32_t rpmVal = ic_getrpm();
+            int rpmVal = currentRPM;
             if (rpmVal > 10000)
             {
                 rpmVal = 0;
@@ -101,19 +105,30 @@ void main()
             display_timer = current_time;
         }
 
-        if (timer_elapsed_ms(pid_timer, current_time) >= 200)
+        if (timer_elapsed_ms(pid_timer, current_time) >= 0)
         {
             currentRPM = ic_getrpm();
-            int32_t error = desiredRPM - currentRPM;
-            int32_t deriv = currentRPM - previousRPM;
+            if ((previousRPM != 0 && currentRPM == 0) || currentRPM > 4000)
+            {
+                currentRPM = previousRPM;
+            }
+            int error = desiredRPM - currentRPM;
+            int deriv = currentRPM - previousRPM;
             integral += error;
+            integral = min(max(integral, -integral_limit), integral_limit);
 
-            int32_t pid_output = Kp * error + Ki * integral - Kd * deriv;
-            pwm_level = min(max(pwm_level + pid_output, 0), 0xffff);
+            int pid_output = Kp * error + Ki * integral - Kd * deriv;
+            pwm_level += pid_output;
+
+            if (pwm_level < 0)
+                pwm_level = 0;
+            if (pwm_level > 0xffff)
+                pwm_level = 0xffff;
+
             pwm_pin_set_level(pwm_level);
 
-            printf("current rpm %i\nerror: %i\npwm_out: %i\nnew pwm:%i\n\n\n", currentRPM, error, pid_output, pwm_level);
-
+            // printf("desiredrpm: %f\ncurrent rpm %i\nerror: %i\nintegral: %i\npwm_out: %i\nnew pwm:%i\n\n\n", desiredRPM, currentRPM, error, integral, pid_output, pwm_level);
+            // printf("p: %f, i: %f, d: %f\n", Kp, Ki, Kd);
             previousRPM = currentRPM;
             pid_timer = current_time;
         }
@@ -125,6 +140,7 @@ void main()
 
             if (input_state == 'x')
             {
+                printf("\n");
                 if (c == 's')
                 {
                     input_state = 's';
@@ -149,28 +165,46 @@ void main()
 
             if (input_state != 'x')
             {
-                int value = 0;
-                if (sscanf(&c, "%d", &value) == 1)
-                {
+                static char input_buffer[32];
+                static int input_index = 0;
 
-                    if (input_state == 's')
+                if (c >= '0' && c <= '9' || c == '.' || c == '-')
+                {
+                    if (input_index < sizeof(input_buffer) - 1)
                     {
-                        desiredRPM = value;
+                        input_buffer[input_index++] = c;
                     }
-                    if (input_state == 'p')
+                }
+                else if (c == '\n' || c == ' ' || c == '\r')
+                {
+                    input_buffer[input_index] = '\0';
+
+                    double value = 0;
+                    if (sscanf(input_buffer, "%lf", &value) == 1)
                     {
-                        Kp = value;
+                        if (input_state == 's')
+                        {
+                            desiredRPM = value;
+                            integral = 0;
+                        }
+                        else if (input_state == 'p')
+                        {
+                            Kp = value;
+                        }
+                        else if (input_state == 'i')
+                        {
+                            Ki = value;
+                        }
+                        else if (input_state == 'd')
+                        {
+                            Kd = value;
+                        }
+
+                        input_state = 'x';
+                        printf("\n");
                     }
-                    else if (input_state == 'i')
-                    {
-                        Ki = value;
-                    }
-                    else if (input_state == 'd')
-                    {
-                        Kd = value;
-                    }
-                    input_state = 'x';
-                    printf("\n");
+
+                    input_index = 0;
                 }
             }
         }
